@@ -1,5 +1,6 @@
 import csv
 import os
+import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -148,7 +149,13 @@ class PlayerSearchApp:
         self.root.bind("<Return>", lambda event: self.on_search())
 
     def load_data(self):
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        # 兼容 .py 运行和打包成 .exe 后运行：都从可执行文件所在目录读取 players.csv
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            # PyInstaller onefile 场景，exe 所在目录
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            # 普通脚本运行
+            base_dir = os.path.dirname(os.path.abspath(__file__))
         csv_path = os.path.join(base_dir, "players.csv")
         if not os.path.exists(csv_path):
             messagebox.showerror("错误", f"未找到 players.csv 文件: {csv_path}")
