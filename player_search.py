@@ -94,6 +94,9 @@ LEAGUE_GROUPS = {
         "费内巴切",
         "加拉塔萨雷",
         "贝西克塔斯"
+    },
+    "其他联赛":{
+        "拜仁"
     }
 }
 
@@ -173,14 +176,31 @@ class PlayerSearchApp:
         ttk.Label(filter_frame, text="位置组别").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.position_group_var = tk.StringVar(value="全部")
         self.position_group_cb = ttk.Combobox(filter_frame, textvariable=self.position_group_var,
-                                              values=list(POSITION_GROUPS.keys()), state="readonly", width=12)
+                                              values=list(POSITION_GROUPS.keys()), state="readonly", width=10)
         self.position_group_cb.grid(row=row, column=1, sticky=tk.W, padx=5, pady=5)
 
-        ttk.Label(filter_frame, text="精确位置").grid(row=row, column=2, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(filter_frame, text="排除组别").grid(row=row, column=2, sticky=tk.W, padx=5, pady=5)
+        self.position_exclude_group_var = tk.StringVar(value="全部")
+        self.position_exclude_group_cb = ttk.Combobox(filter_frame, textvariable=self.position_exclude_group_var,
+                                                      values=list(POSITION_GROUPS.keys()), state="readonly", width=10)
+        self.position_exclude_group_cb.grid(row=row, column=3, sticky=tk.W, padx=5, pady=5)
+
+        row += 1
+
+        ttk.Label(filter_frame, text="精确位置").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.position_var = tk.StringVar()
         self.position_cb = ttk.Combobox(filter_frame, textvariable=self.position_var,
                                         values=self.all_positions, width=12)
-        self.position_cb.grid(row=row, column=3, sticky=tk.W, padx=5, pady=5)
+        self.position_cb.grid(row=row, column=1, sticky=tk.W, padx=5, pady=5)
+
+        row += 1
+
+        ttk.Label(filter_frame, text="类型").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
+        self.type_var = tk.StringVar(value="全部")
+        type_values = ["全部", "现役", "历史"]
+        self.type_cb = ttk.Combobox(filter_frame, textvariable=self.type_var,
+                                    values=type_values, state="readonly", width=12)
+        self.type_cb.grid(row=row, column=1, sticky=tk.W, padx=5, pady=5)
 
         row += 1
 
@@ -196,14 +216,22 @@ class PlayerSearchApp:
         ttk.Label(filter_frame, text="俱乐部分组").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.league_group_var = tk.StringVar(value="全部")
         self.league_group_cb = ttk.Combobox(filter_frame, textvariable=self.league_group_var,
-                                            values=list(LEAGUE_GROUPS.keys()), state="readonly", width=12)
+                                            values=list(LEAGUE_GROUPS.keys()), state="readonly", width=10)
         self.league_group_cb.grid(row=row, column=1, sticky=tk.W, padx=5, pady=5)
 
-        ttk.Label(filter_frame, text="精确俱乐部").grid(row=row, column=2, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(filter_frame, text="排除分组").grid(row=row, column=2, sticky=tk.W, padx=5, pady=5)
+        self.league_exclude_group_var = tk.StringVar(value="全部")
+        self.league_exclude_group_cb = ttk.Combobox(filter_frame, textvariable=self.league_exclude_group_var,
+                                                    values=list(LEAGUE_GROUPS.keys()), state="readonly", width=10)
+        self.league_exclude_group_cb.grid(row=row, column=3, sticky=tk.W, padx=5, pady=5)
+
+        row += 1
+
+        ttk.Label(filter_frame, text="精确俱乐部").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.club_var = tk.StringVar()
         self.club_cb = ttk.Combobox(filter_frame, textvariable=self.club_var,
                                     values=self.all_clubs, width=18)
-        self.club_cb.grid(row=row, column=3, sticky=tk.W, padx=5, pady=5)
+        self.club_cb.grid(row=row, column=1, sticky=tk.W, padx=5, pady=5)
 
         row += 1
 
@@ -211,14 +239,22 @@ class PlayerSearchApp:
         self.continent_var = tk.StringVar(value="全部")
         continent_values = ["全部", "欧洲", "南美洲", "北美洲", "非洲", "亚洲", "大洋洲", "其他"]
         self.continent_cb = ttk.Combobox(filter_frame, textvariable=self.continent_var,
-                                         values=continent_values, state="readonly", width=12)
+                                         values=continent_values, state="readonly", width=10)
         self.continent_cb.grid(row=row, column=1, sticky=tk.W, padx=5, pady=5)
 
-        ttk.Label(filter_frame, text="精确国籍").grid(row=row, column=2, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(filter_frame, text="排除大洲").grid(row=row, column=2, sticky=tk.W, padx=5, pady=5)
+        self.continent_exclude_var = tk.StringVar(value="全部")
+        self.continent_exclude_cb = ttk.Combobox(filter_frame, textvariable=self.continent_exclude_var,
+                                                 values=continent_values, state="readonly", width=10)
+        self.continent_exclude_cb.grid(row=row, column=3, sticky=tk.W, padx=5, pady=5)
+
+        row += 1
+
+        ttk.Label(filter_frame, text="精确国籍").grid(row=row, column=0, sticky=tk.W, padx=5, pady=5)
         self.country_var = tk.StringVar()
         self.country_cb = ttk.Combobox(filter_frame, textvariable=self.country_var,
                                        values=self.all_countries, width=12)
-        self.country_cb.grid(row=row, column=3, sticky=tk.W, padx=5, pady=5)
+        self.country_cb.grid(row=row, column=1, sticky=tk.W, padx=5, pady=5)
 
         row += 1
 
@@ -295,12 +331,21 @@ class PlayerSearchApp:
         filtered = self.players
 
         group = self.position_group_var.get()
+        exclude_group = self.position_exclude_group_var.get()
         pos = self.position_var.get().strip()
         if group and group != "全部":
             group_positions = POSITION_GROUPS.get(group, [])
             filtered = [p for p in filtered if p.get("位置") in group_positions]
+        if exclude_group and exclude_group != "全部":
+            exclude_positions = POSITION_GROUPS.get(exclude_group, [])
+            if exclude_positions:
+                filtered = [p for p in filtered if p.get("位置") not in exclude_positions]
         if pos:
             filtered = [p for p in filtered if p.get("位置") == pos]
+
+        player_type = self.type_var.get()
+        if player_type and player_type != "全部":
+            filtered = [p for p in filtered if p.get("类型") == player_type]
 
         min_shirt = self.parse_int(self.shirt_min_var.get())
         max_shirt = self.parse_int(self.shirt_max_var.get())
@@ -318,17 +363,25 @@ class PlayerSearchApp:
             filtered = [p for p in filtered if shirt_ok(p)]
 
         league_group = self.league_group_var.get()
+        league_exclude_group = self.league_exclude_group_var.get()
         club = self.club_var.get().strip()
         if league_group and league_group != "全部":
             clubs_in_group = LEAGUE_GROUPS.get(league_group, set())
             filtered = [p for p in filtered if p.get("俱乐部") in clubs_in_group]
+        if league_exclude_group and league_exclude_group != "全部":
+            exclude_clubs = LEAGUE_GROUPS.get(league_exclude_group, set())
+            if exclude_clubs:
+                filtered = [p for p in filtered if p.get("俱乐部") not in exclude_clubs]
         if club:
             filtered = [p for p in filtered if p.get("俱乐部") == club]
 
         continent = self.continent_var.get()
+        continent_exclude = self.continent_exclude_var.get()
         country = self.country_var.get().strip()
         if continent and continent != "全部":
             filtered = [p for p in filtered if self.get_continent(p.get("国籍")) == continent]
+        if continent_exclude and continent_exclude != "全部":
+            filtered = [p for p in filtered if self.get_continent(p.get("国籍")) != continent_exclude]
         if country:
             filtered = [p for p in filtered if p.get("国籍") == country]
 
@@ -355,12 +408,16 @@ class PlayerSearchApp:
 
     def on_reset(self):
         self.position_group_var.set("全部")
+        self.position_exclude_group_var.set("全部")
         self.position_var.set("")
+        self.type_var.set("全部")
         self.shirt_min_var.set("")
         self.shirt_max_var.set("")
         self.league_group_var.set("全部")
+        self.league_exclude_group_var.set("全部")
         self.club_var.set("")
         self.continent_var.set("全部")
+        self.continent_exclude_var.set("全部")
         self.country_var.set("")
         self.height_min_var.set("")
         self.height_max_var.set("")
