@@ -15,6 +15,8 @@
   --on-secondary-container: #001d35;
   --tertiary-container: #ffd8e4;
   --on-tertiary-container: #31111d;
+  --success-container: #b7f0b1;
+  --on-success-container: #0a2a08;
   --surface: #f8fafd;
   --surface-lowest: #ffffff;
   --surface-low: #f0f4f9;
@@ -24,9 +26,11 @@
   --on-surface-variant: #444746;
   --outline: #747775;
   --outline-variant: #c4c7c5;
-  --error-container: #f9dedc;
-  --on-error-container: #410e0b;
+  --ease: cubic-bezier(.3, 0, 0, 1);
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --dur: .3s;
   --shadow-1: 0 1px 2px rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
+  --shadow-2: 0 1px 3px rgba(0,0,0,.30), 0 4px 8px 3px rgba(0,0,0,.15);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -38,6 +42,8 @@
     --on-secondary-container: #c2e7ff;
     --tertiary-container: #633b48;
     --on-tertiary-container: #ffd8e4;
+    --success-container: #1b5e20;
+    --on-success-container: #b7f0b1;
     --surface: #131314;
     --surface-lowest: #0e0e11;
     --surface-low: #1b1b1e;
@@ -47,9 +53,8 @@
     --on-surface-variant: #c4c7c5;
     --outline: #8e918f;
     --outline-variant: #444746;
-    --error-container: #8c1d18;
-    --on-error-container: #f9dedc;
     --shadow-1: 0 1px 2px rgba(0,0,0,.5), 0 1px 3px 1px rgba(0,0,0,.3);
+    --shadow-2: 0 1px 3px rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
   }
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,6 +66,7 @@ body {
   font-size: 14px;
   line-height: 1.5;
   min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ===== Top app bar ===== */
@@ -83,8 +89,23 @@ header .icon-badge {
   color: var(--on-primary-container);
   flex-shrink: 0;
 }
-header h1 { font-size: 22px; font-weight: 500; letter-spacing: 0; }
-#count { font-size: 12px; font-weight: 500; color: var(--primary); }
+header h1 { font-size: 22px; font-weight: 500; }
+#count {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-primary-container);
+  background: var(--primary-container);
+  border-radius: 8px;
+  padding: 2px 10px;
+  margin-top: 4px;
+}
+#count.pulse { animation: pulse .4s var(--ease); }
+@keyframes pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
 
 /* ===== Filter card ===== */
 details#filters {
@@ -93,11 +114,12 @@ details#filters {
   border-radius: 12px;
   box-shadow: var(--shadow-1);
   overflow: hidden;
+  transition: box-shadow var(--dur) var(--ease-standard);
 }
 details#filters summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   padding: 14px 16px;
   min-height: 48px;
   font-size: 16px;
@@ -105,33 +127,64 @@ details#filters summary {
   cursor: pointer;
   list-style: none;
   user-select: none;
+  position: relative;
+  overflow: hidden;
+  transition: background-color .15s var(--ease-standard);
 }
+details#filters summary:hover { background: color-mix(in srgb, var(--on-surface) 4%, transparent); }
+details#filters summary:active { background: color-mix(in srgb, var(--on-surface) 8%, transparent); }
 details#filters summary::-webkit-details-marker { display: none; }
+details#filters summary .spacer { flex: 1; }
+.active-badge {
+  min-width: 22px; height: 22px;
+  border-radius: 11px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  transition: transform .2s var(--ease), opacity .2s var(--ease);
+}
+.active-badge[hidden] { display: inline-flex; transform: scale(0); opacity: 0; }
 details#filters summary .chev {
   width: 24px; height: 24px;
   color: var(--on-surface-variant);
-  transition: transform .2s;
+  transition: transform var(--dur) var(--ease);
 }
 details#filters[open] summary .chev { transform: rotate(180deg); }
-.filter-body { padding: 4px 16px 20px; }
+.filter-body { padding: 20px 16px; }
+
+/* 面板展开高度过渡（Chrome 131+，不支持则退化为瞬间开合） */
+@supports (interpolate-size: allow-keywords) {
+  :root { interpolate-size: allow-keywords; }
+  details#filters::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition: block-size var(--dur) var(--ease), content-visibility var(--dur) allow-discrete;
+  }
+  details#filters[open]::details-content { block-size: auto; }
+}
 
 /* ===== Field grid ===== */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px 12px;
+  gap: 18px 12px;
 }
-.field { display: flex; flex-direction: column; min-width: 0; }
-.field > label {
-  font-size: 12px;
-  font-weight: 500;
+.field { position: relative; min-width: 0; }
+.field .pair { display: flex; align-items: flex-start; gap: 8px; }
+.field .pair > .field { flex: 1; }
+.field .pair .sep {
   color: var(--on-surface-variant);
-  padding: 0 4px 2px;
+  font-size: 14px;
+  line-height: 48px;
+  flex-shrink: 0;
 }
-.field .pair { display: flex; align-items: center; gap: 8px; }
-.field .pair span { color: var(--on-surface-variant); font-size: 12px; flex-shrink: 0; }
 
-/* M3 filled text field / dropdown */
+/* M3 浮动标签文本框 */
 select, input {
   width: 100%;
   height: 48px;
@@ -144,6 +197,7 @@ select, input {
   font-size: 16px;
   font-family: inherit;
   outline: none;
+  transition: border-color .15s var(--ease-standard), background-color .15s var(--ease-standard);
 }
 select {
   appearance: none;
@@ -151,16 +205,96 @@ select {
   background-repeat: no-repeat;
   background-position: right 8px center;
   padding-right: 40px;
+  cursor: pointer;
 }
 select:focus, input:focus {
   border-bottom: 2px solid var(--primary);
   background: var(--surface-high);
 }
-input::placeholder { color: var(--on-surface-variant); }
+input::placeholder { color: transparent; }
+input:focus::placeholder { color: var(--on-surface-variant); }
 input[type=number] { appearance: textfield; -moz-appearance: textfield; }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
-/* Section titles — M3 label + divider */
+/* 浮动 label：默认落在框内，聚焦/有值时上浮 */
+.field > label {
+  position: absolute;
+  left: 8px;
+  top: 14px;
+  padding: 0 4px;
+  font-size: 16px;
+  color: var(--on-surface-variant);
+  pointer-events: none;
+  white-space: nowrap;
+  background: transparent;
+  transition: top .15s var(--ease-standard), font-size .15s var(--ease-standard),
+              color .15s var(--ease-standard), background-color .15s var(--ease-standard);
+}
+.field > input:focus ~ label,
+.field > input:not(:placeholder-shown) ~ label,
+.field > select ~ label {
+  top: -9px;
+  font-size: 12px;
+  background: var(--surface-lowest);
+}
+.field > input:focus ~ label,
+.field > select:focus ~ label { color: var(--primary); }
+
+/* 分段按钮的静态标签 */
+.field > .seg-label {
+  position: static;
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  padding: 0 4px 4px;
+}
+
+/* ===== M3 分段按钮 ===== */
+.segmented {
+  display: flex;
+  height: 40px;
+  border: 1px solid var(--outline);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.segmented button {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--on-surface);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: background-color .15s var(--ease-standard), color .15s var(--ease-standard);
+}
+.segmented button + button { border-left: 1px solid var(--outline); }
+.segmented button:hover { background: color-mix(in srgb, var(--on-surface) 6%, transparent); }
+.segmented button.active {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  font-weight: 500;
+}
+.segmented button.active::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 14px; height: 14px;
+  margin-top: -7px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center/contain no-repeat;
+  animation: checkIn .25s var(--ease);
+}
+.segmented button.active { padding-left: 26px; }
+@keyframes checkIn { from { transform: scale(.4); opacity: 0; } }
+
+/* Section titles */
 .section-title {
   grid-column: 1 / -1;
   display: flex;
@@ -170,7 +304,7 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
   font-weight: 500;
   letter-spacing: .5px;
   color: var(--primary);
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .section-title::after {
   content: "";
@@ -192,24 +326,53 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
-  transition: box-shadow .15s, filter .15s;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow .15s var(--ease-standard), filter .15s var(--ease-standard), transform .1s var(--ease-standard);
 }
 #reset:hover { box-shadow: var(--shadow-1); }
-#reset:active { filter: brightness(.94); }
+#reset:active { transform: scale(.98); }
+button:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* 涟漪 */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .14;
+  transform: scale(0);
+  animation: rip .5s var(--ease-standard) forwards;
+  pointer-events: none;
+}
+@keyframes rip { to { transform: scale(1); opacity: 0; } }
 
 /* ===== Result cards ===== */
 main { padding: 0 16px 32px; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
 .card {
   background: var(--surface-lowest);
   border-radius: 12px;
   box-shadow: var(--shadow-1);
   padding: 16px;
+  animation: cardIn .4s var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 28ms);
+  transition: box-shadow var(--dur) var(--ease-standard), transform var(--dur) var(--ease-standard);
+}
+.card:hover {
+  box-shadow: var(--shadow-2);
+  transform: translateY(-2px);
 }
 .card .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .card .name { font-size: 16px; font-weight: 500; margin-right: 2px; }
 
-/* M3 chips (8px radius) */
+/* M3 chips —— 位置按组别配色 */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -220,8 +383,11 @@ main { padding: 0 16px 32px; }
   font-weight: 500;
   background: var(--surface-container);
   color: var(--on-surface-variant);
+  transition: transform .15s var(--ease-standard);
 }
-.chip.pos { background: var(--primary-container); color: var(--on-primary-container); }
+.chip.g-front { background: var(--primary-container); color: var(--on-primary-container); }
+.chip.g-mid { background: var(--success-container); color: var(--on-success-container); }
+.chip.g-back { background: var(--secondary-container); color: var(--on-secondary-container); }
 .chip.hist { background: var(--tertiary-container); color: var(--on-tertiary-container); }
 .chip.num { background: transparent; border: 1px solid var(--outline); color: var(--on-surface-variant); }
 
@@ -241,12 +407,27 @@ main { padding: 0 16px 32px; }
 .card .meta b { font-size: 14px; font-weight: 500; color: var(--on-surface); text-align: right; }
 
 .empty {
+  grid-column: 1 / -1;
   text-align: center;
   color: var(--on-surface-variant);
   padding: 56px 0;
   font-size: 14px;
+  animation: cardIn .35s var(--ease);
 }
 .empty svg { display: block; margin: 0 auto 12px; color: var(--outline-variant); }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: .01ms !important;
+  }
+}
 
 @media (min-width: 640px) {
   header { padding: 20px 24px; }
@@ -269,36 +450,40 @@ main { padding: 0 16px 32px; }
 <details id="filters" open>
   <summary>
     查询条件
+    <span class="spacer"></span>
+    <span class="active-badge" id="activeBadge" hidden></span>
     <svg class="chev" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
   </summary>
   <div class="filter-body">
     <div class="grid">
       <div class="section-title">位置</div>
-      <div class="field"><label>位置组别</label><select id="posGroup"></select></div>
-      <div class="field"><label>排除组别</label><select id="posGroupEx"></select></div>
-      <div class="field"><label>精确位置</label><input id="pos" list="dl-pos" placeholder="如：中锋"></div>
-      <div class="field"><label>类型</label>
-        <select id="type"><option>全部</option><option>现役</option><option>历史</option></select>
+      <div class="field"><select id="posGroup"></select><label>位置组别</label></div>
+      <div class="field"><select id="posGroupEx"></select><label>排除组别</label></div>
+      <div class="field"><input id="pos" list="dl-pos" placeholder=" "><label>精确位置</label></div>
+      <div class="field">
+        <label class="seg-label">类型</label>
+        <div class="segmented" id="type" data-values="全部,现役,历史"></div>
       </div>
-      <div class="field"><label>背号范围</label>
-        <div class="pair"><input id="shirtMin" type="number" inputmode="numeric" placeholder="最小"><span>至</span><input id="shirtMax" type="number" inputmode="numeric" placeholder="最大"></div>
-      </div>
+      <div class="field"><input id="shirtMin" type="number" inputmode="numeric" placeholder=" "><label>最小背号</label></div>
+      <div class="field"><input id="shirtMax" type="number" inputmode="numeric" placeholder=" "><label>最大背号</label></div>
 
       <div class="section-title">俱乐部 / 联赛</div>
-      <div class="field"><label>俱乐部分组</label><select id="leagueGroup"></select></div>
-      <div class="field"><label>排除分组</label><select id="leagueGroupEx"></select></div>
-      <div class="field"><label>精确俱乐部</label><input id="club" list="dl-club" placeholder="如：曼联"></div>
+      <div class="field"><select id="leagueGroup"></select><label>俱乐部分组</label></div>
+      <div class="field"><select id="leagueGroupEx"></select><label>排除分组</label></div>
+      <div class="field"><input id="club" list="dl-club" placeholder=" "><label>精确俱乐部</label></div>
 
       <div class="section-title">国籍</div>
-      <div class="field"><label>国籍大洲</label><select id="continent"></select></div>
-      <div class="field"><label>排除大洲</label><select id="continentEx"></select></div>
-      <div class="field"><label>精确国籍</label><input id="country" list="dl-country" placeholder="如：法国"></div>
+      <div class="field"><select id="continent"></select><label>国籍大洲</label></div>
+      <div class="field"><select id="continentEx"></select><label>排除大洲</label></div>
+      <div class="field"><input id="country" list="dl-country" placeholder=" "><label>精确国籍</label></div>
 
       <div class="section-title">身体</div>
-      <div class="field"><label>身高范围(cm)</label>
-        <div class="pair"><input id="heightMin" type="number" inputmode="numeric" placeholder="最小"><span>至</span><input id="heightMax" type="number" inputmode="numeric" placeholder="最大"></div>
+      <div class="field"><input id="heightMin" type="number" inputmode="numeric" placeholder=" "><label>最小身高</label></div>
+      <div class="field"><input id="heightMax" type="number" inputmode="numeric" placeholder=" "><label>最大身高</label></div>
+      <div class="field">
+        <label class="seg-label">惯用脚</label>
+        <div class="segmented" id="foot"></div>
       </div>
-      <div class="field"><label>惯用脚</label><select id="foot"></select></div>
     </div>
     <button id="reset">重置全部条件</button>
   </div>
@@ -333,8 +518,47 @@ function parseIntOrNull(v) {
 function getContinent(country) {
   return country ? (CONFIG.country_continent[country] || "其他") : "其他";
 }
+function getPosGroupClass(pos) {
+  for (const [g, list] of Object.entries(CONFIG.position_groups)) {
+    if (g !== "全部" && list.includes(pos)) return {前场: "g-front", 中场: "g-mid", 后场: "g-back"}[g] || "";
+  }
+  return "";
+}
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* 分段按钮 */
+function buildSegmented(id, values) {
+  const box = $(id);
+  box.innerHTML = values.map(v => `<button type="button" data-v="${esc(v)}">${esc(v)}</button>`).join("");
+  box.querySelector("button").classList.add("active");
+  box.querySelectorAll("button").forEach(b =>
+    b.addEventListener("click", () => {
+      box.querySelectorAll("button").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      applyFilters();
+    }));
+}
+const segGet = id => $(id).querySelector(".active").dataset.v;
+const segReset = id => {
+  const btns = $(id).querySelectorAll("button");
+  btns.forEach(b => b.classList.remove("active"));
+  btns[0].classList.add("active");
+};
+
+/* 涟漪 */
+function addRipple(e) {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  const size = Math.max(r.width, r.height) * 2;
+  const rip = document.createElement("span");
+  rip.className = "ripple";
+  rip.style.width = rip.style.height = size + "px";
+  rip.style.left = (e.clientX - r.left - size / 2) + "px";
+  rip.style.top = (e.clientY - r.top - size / 2) + "px";
+  el.appendChild(rip);
+  setTimeout(() => rip.remove(), 600);
+}
 
 function initFilters() {
   fillSelect($("posGroup"), Object.keys(CONFIG.position_groups));
@@ -343,14 +567,30 @@ function initFilters() {
   fillSelect($("leagueGroupEx"), Object.keys(CONFIG.league_groups));
   fillSelect($("continent"), CONTINENTS);
   fillSelect($("continentEx"), CONTINENTS);
-  fillSelect($("foot"), ["全部", ...uniq("惯用脚")]);
+  buildSegmented("type", $("type").dataset.values.split(","));
+  buildSegmented("foot", ["全部", ...uniq("惯用脚")]);
   fillDatalist("dl-pos", uniq("位置"));
   fillDatalist("dl-club", uniq("俱乐部"));
   fillDatalist("dl-country", uniq("国籍"));
 
   document.querySelectorAll("#filters select, #filters input").forEach(el =>
     el.addEventListener("input", applyFilters));
+  document.querySelectorAll("#reset, .segmented button, details#filters summary").forEach(el =>
+    el.addEventListener("pointerdown", addRipple));
   $("reset").addEventListener("click", resetFilters);
+}
+
+function activeCount() {
+  let n = 0;
+  ["posGroup", "posGroupEx", "leagueGroup", "leagueGroupEx", "continent", "continentEx"].forEach(id => {
+    if ($(id).value !== "全部") n++;
+  });
+  ["pos", "club", "country", "shirtMin", "shirtMax", "heightMin", "heightMax"].forEach(id => {
+    if ($(id).value.trim()) n++;
+  });
+  if (segGet("type") !== "全部") n++;
+  if (segGet("foot") !== "全部") n++;
+  return n;
 }
 
 function applyFilters() {
@@ -364,7 +604,7 @@ function applyFilters() {
   }
   if (pos) rows = rows.filter(p => p["位置"] === pos);
 
-  const type = $("type").value;
+  const type = segGet("type");
   if (type !== "全部") rows = rows.filter(p => p["类型"] === type);
 
   const sMin = parseIntOrNull($("shirtMin").value), sMax = parseIntOrNull($("shirtMax").value);
@@ -396,25 +636,42 @@ function applyFilters() {
     });
   }
 
-  const foot = $("foot").value;
+  const foot = segGet("foot");
   if (foot !== "全部") rows = rows.filter(p => p["惯用脚"] === foot);
 
   render(rows);
+  updateBadge();
+}
+
+function updateBadge() {
+  const n = activeCount();
+  const badge = $("activeBadge");
+  badge.hidden = n === 0;
+  badge.textContent = n;
 }
 
 function render(rows) {
-  $("count").textContent = `共 ${rows.length} 名球员`;
+  const count = $("count");
+  const text = `共 ${rows.length} 名球员`;
+  if (count.textContent !== text) {
+    count.textContent = text;
+    count.classList.remove("pulse");
+    void count.offsetWidth;
+    count.classList.add("pulse");
+  }
   if (!rows.length) {
     $("results").innerHTML = `<div class="empty">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
       没有符合条件的球员</div>`;
     return;
   }
-  $("results").innerHTML = rows.map(p => `
-    <div class="card">
+  $("results").innerHTML = rows.map((p, i) => {
+    const posClass = getPosGroupClass(p["位置"]);
+    return `
+    <div class="card" style="--i:${Math.min(i, 15)}">
       <div class="top">
         <span class="name">${esc(p["球员"])}</span>
-        <span class="chip pos">${esc(p["位置"]) || "—"}</span>
+        <span class="chip ${posClass}">${esc(p["位置"]) || "—"}</span>
         <span class="chip ${p["类型"] === "历史" ? "hist" : ""}">${esc(p["类型"])}</span>
         ${p["背号"] ? `<span class="chip num">#${esc(p["背号"])}</span>` : ""}
       </div>
@@ -424,12 +681,15 @@ function render(rows) {
         <span>身高 <b>${p["身高"] ? esc(p["身高"]) + "cm" : "—"}</b></span>
         <span>惯用脚 <b>${esc(p["惯用脚"]) || "—"}</b></span>
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 }
 
 function resetFilters() {
   document.querySelectorAll("#filters select").forEach(el => el.selectedIndex = 0);
   document.querySelectorAll("#filters input").forEach(el => el.value = "");
+  segReset("type");
+  segReset("foot");
   applyFilters();
 }
 
