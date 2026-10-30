@@ -192,48 +192,56 @@ details#filters[open] summary .chev { transform: rotate(180deg); }
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 18px 12px;
 }
-.field { position: relative; min-width: 0; }
+.field { min-width: 0; }
+.field > label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .2px;
+  color: var(--on-surface-variant);
+  padding: 0 16px 6px;
+}
+.field:focus-within > label { color: var(--primary); }
+.ctrl { position: relative; }
 .field .pair { display: flex; align-items: center; gap: 8px; }
-.field .sub { position: relative; flex: 1; min-width: 0; }
+.field .pair input { flex: 1; min-width: 0; }
 .field .sep {
   color: var(--on-surface-variant);
   font-size: 13px;
   flex-shrink: 0;
 }
 
-/* M3 描边式文本框（outlined） */
+/* Google 风格胶囊控件（pill） */
 select, input {
   width: 100%;
   height: 48px;
-  padding: 0 12px;
-  background: transparent;
+  padding: 0 16px;
+  background: var(--surface-container);
   color: var(--on-surface);
-  border: 1px solid var(--outline);
-  border-radius: 4px;
-  font-size: 16px;
+  border: none;
+  border-radius: 24px;
+  font-size: 15px;
   font-family: inherit;
   outline: none;
   caret-color: var(--primary);
-  transition: border-color .15s var(--ease-standard), box-shadow .15s var(--ease-standard);
+  transition: background-color .15s var(--ease-standard), box-shadow .2s var(--ease);
 }
 select {
   appearance: none;
   padding-right: 44px;
   cursor: pointer;
 }
-select:hover, input:hover { border-color: var(--on-surface); }
+select:hover, input:hover { background: var(--surface-high); }
 select:focus, input:focus {
-  border-color: var(--primary);
-  box-shadow: inset 0 0 0 1px var(--primary);
+  background: var(--surface-lowest);
+  box-shadow: 0 0 0 2px var(--primary), var(--shadow-1);
 }
-input::placeholder { color: transparent; }
-input:focus::placeholder { color: var(--on-surface-variant); }
-.field .sub input::placeholder { color: var(--on-surface-variant); }
+input::placeholder { color: var(--on-surface-variant); }
 input[type=number] { appearance: textfield; -moz-appearance: textfield; }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
 /* 下拉箭头 / 前导图标 / 清除按钮 */
-.field > svg.chev-f, .field > svg.lead {
+.ctrl > svg.chev-f, .ctrl > svg.lead {
   position: absolute;
   top: 14px;
   width: 20px;
@@ -242,88 +250,62 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
   pointer-events: none;
   transition: transform .2s var(--ease), color .15s var(--ease-standard);
 }
-.field > svg.chev-f { right: 12px; }
-.field > svg.lead { left: 12px; }
-.field:focus-within > svg.chev-f { transform: rotate(180deg); color: var(--primary); }
-.field:focus-within > svg.lead { color: var(--primary); }
-.field.has-icon > input { padding-left: 44px; padding-right: 40px; }
-.field.has-icon > label { left: 40px; }
+.ctrl > svg.chev-f { right: 14px; }
+.ctrl > svg.lead { left: 14px; }
+.ctrl:focus-within > svg.chev-f { transform: rotate(180deg); color: var(--primary); }
+.ctrl:focus-within > svg.lead { color: var(--primary); }
+.ctrl > input.lead-in { padding-left: 44px; padding-right: 44px; }
 .clr {
   position: absolute;
-  right: 8px;
+  right: 10px;
   top: 12px;
   width: 24px;
   height: 24px;
   border: none;
   border-radius: 12px;
-  background: transparent;
+  background: var(--surface-high);
   color: var(--on-surface-variant);
   display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   padding: 0;
+  transition: background-color .15s, color .15s, transform .15s var(--ease);
 }
-.clr:hover { background: color-mix(in srgb, var(--on-surface) 8%, transparent); color: var(--on-surface); }
-.field.has-value .clr { display: inline-flex; }
+.clr:hover { background: var(--outline-variant); color: var(--on-surface); }
+.clr:active { transform: scale(.9); }
+.ctrl.has-value .clr { display: inline-flex; }
 
-/* 浮动 label：默认落在框内，聚焦/有值时上浮 */
-.field > label {
-  position: absolute;
-  left: 8px;
-  top: 14px;
-  padding: 0 4px;
-  font-size: 16px;
-  color: var(--on-surface-variant);
-  pointer-events: none;
-  white-space: nowrap;
-  background: transparent;
-  transition: top .15s var(--ease-standard), font-size .15s var(--ease-standard),
-              color .15s var(--ease-standard), background-color .15s var(--ease-standard);
-}
-.field > input:focus ~ label,
-.field > input:not(:placeholder-shown) ~ label,
-.field > select ~ label,
-.field.seg > label,
-.field.range > label {
-  top: -9px;
-  left: 8px;
-  font-size: 12px;
-  background: var(--surface-lowest);
-}
-.field > input:focus ~ label,
-.field > select:focus ~ label,
-.field.seg:focus-within > label,
-.field.range:focus-within > label { color: var(--primary); }
-
-/* ===== M3 分段按钮 ===== */
+/* ===== 分段按钮（胶囊容器式） ===== */
 .segmented {
   display: flex;
   height: 48px;
-  border: 1px solid var(--outline);
+  padding: 4px;
+  gap: 4px;
+  background: var(--surface-container);
   border-radius: 24px;
-  overflow: hidden;
 }
 .segmented button {
   flex: 1;
   min-width: 0;
   border: none;
+  border-radius: 20px;
   background: transparent;
-  color: var(--on-surface);
+  color: var(--on-surface-variant);
   font-size: 14px;
   font-family: inherit;
   cursor: pointer;
   position: relative;
   overflow: hidden;
   white-space: nowrap;
-  transition: background-color .15s var(--ease-standard), color .15s var(--ease-standard);
+  transition: background-color .2s var(--ease), color .2s var(--ease), box-shadow .2s var(--ease);
 }
-.segmented button + button { border-left: 1px solid var(--outline); }
-.segmented button:hover { background: color-mix(in srgb, var(--on-surface) 6%, transparent); }
+.segmented button:hover { color: var(--on-surface); }
 .segmented button.active {
   background: var(--secondary-container);
   color: var(--on-secondary-container);
   font-weight: 500;
+  box-shadow: var(--shadow-1);
 }
 .segmented button.active::before {
   content: "";
@@ -553,59 +535,52 @@ main { padding: 0 16px 32px; }
   <div class="filter-body">
     <div class="grid">
       <div class="section-title"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>位置</div>
-      <div class="field"><select id="posGroup"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg><label>位置组别</label></div>
-      <div class="field"><select id="posGroupEx"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg><label>排除组别</label></div>
-      <div class="field has-icon">
+      <div class="field"><label>位置组别</label><div class="ctrl"><select id="posGroup"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg></div></div>
+      <div class="field"><label>排除组别</label><div class="ctrl"><select id="posGroupEx"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg></div></div>
+      <div class="field"><label>精确位置</label><div class="ctrl">
         <svg class="lead" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <input id="pos" list="dl-pos" placeholder=" ">
+        <input id="pos" class="lead-in" list="dl-pos" placeholder="如：中锋">
         <button type="button" class="clr" tabindex="-1" aria-label="清除"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
-        <label>精确位置</label>
-      </div>
-      <div class="field seg">
+      </div></div>
+      <div class="field seg"><label>类型</label>
         <div class="segmented" id="type" data-values="全部,现役,历史"></div>
-        <label>类型</label>
       </div>
-      <div class="field range">
+      <div class="field range"><label>背号范围</label>
         <div class="pair">
-          <div class="sub"><input id="shirtMin" type="number" inputmode="numeric" placeholder="最小"></div>
+          <input id="shirtMin" type="number" inputmode="numeric" placeholder="最小">
           <span class="sep">至</span>
-          <div class="sub"><input id="shirtMax" type="number" inputmode="numeric" placeholder="最大"></div>
+          <input id="shirtMax" type="number" inputmode="numeric" placeholder="最大">
         </div>
-        <label>背号范围</label>
       </div>
 
       <div class="section-title"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>俱乐部 / 联赛</div>
-      <div class="field"><select id="leagueGroup"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg><label>俱乐部分组</label></div>
-      <div class="field"><select id="leagueGroupEx"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg><label>排除分组</label></div>
-      <div class="field has-icon">
+      <div class="field"><label>俱乐部分组</label><div class="ctrl"><select id="leagueGroup"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg></div></div>
+      <div class="field"><label>排除分组</label><div class="ctrl"><select id="leagueGroupEx"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg></div></div>
+      <div class="field"><label>精确俱乐部</label><div class="ctrl">
         <svg class="lead" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <input id="club" list="dl-club" placeholder=" ">
+        <input id="club" class="lead-in" list="dl-club" placeholder="如：曼联">
         <button type="button" class="clr" tabindex="-1" aria-label="清除"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
-        <label>精确俱乐部</label>
-      </div>
+      </div></div>
 
       <div class="section-title"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>国籍</div>
-      <div class="field"><select id="continent"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg><label>国籍大洲</label></div>
-      <div class="field"><select id="continentEx"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg><label>排除大洲</label></div>
-      <div class="field has-icon">
+      <div class="field"><label>国籍大洲</label><div class="ctrl"><select id="continent"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg></div></div>
+      <div class="field"><label>排除大洲</label><div class="ctrl"><select id="continentEx"></select><svg class="chev-f" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg></div></div>
+      <div class="field"><label>精确国籍</label><div class="ctrl">
         <svg class="lead" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <input id="country" list="dl-country" placeholder=" ">
+        <input id="country" class="lead-in" list="dl-country" placeholder="如：法国">
         <button type="button" class="clr" tabindex="-1" aria-label="清除"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
-        <label>精确国籍</label>
-      </div>
+      </div></div>
 
       <div class="section-title"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 10H3V8h2v4h2V8h2v4h2V8h2v4h2V8h2v4h2V8h2v8z"/></svg>身体</div>
-      <div class="field range">
+      <div class="field range"><label>身高范围(cm)</label>
         <div class="pair">
-          <div class="sub"><input id="heightMin" type="number" inputmode="numeric" placeholder="最小"></div>
+          <input id="heightMin" type="number" inputmode="numeric" placeholder="最小">
           <span class="sep">至</span>
-          <div class="sub"><input id="heightMax" type="number" inputmode="numeric" placeholder="最大"></div>
+          <input id="heightMax" type="number" inputmode="numeric" placeholder="最大">
         </div>
-        <label>身高范围(cm)</label>
       </div>
-      <div class="field seg">
+      <div class="field seg"><label>惯用脚</label>
         <div class="segmented" id="foot"></div>
-        <label>惯用脚</label>
       </div>
     </div>
     <button id="reset">重置全部条件</button>
