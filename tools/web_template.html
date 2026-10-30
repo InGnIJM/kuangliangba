@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>球员搜索</title>
+<style>
+:root {
+  --bg: #0b1220;
+  --surface: #131c2e;
+  --surface-2: #1a2540;
+  --border: #2a3a5c;
+  --text: #e8edf7;
+  --text-dim: #93a1bd;
+  --accent: #34d17b;
+  --accent-dim: #1d5c3a;
+  --danger: #f0645a;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, var(--bg) 85%, transparent);
+}
+header h1 { font-size: 20px; font-weight: 700; }
+header h1::before { content: "⚽ "; }
+#count { color: var(--accent); font-size: 13px; }
+
+details#filters {
+  margin: 0 12px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+details#filters summary {
+  padding: 12px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+details#filters summary::after {
+  content: "▾";
+  color: var(--text-dim);
+  transition: transform .2s;
+}
+details#filters:not([open]) summary::after { transform: rotate(-90deg); }
+.filter-body { padding: 0 16px 16px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px 12px;
+}
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label { font-size: 12px; color: var(--text-dim); }
+.field .pair { display: flex; align-items: center; gap: 6px; }
+.field .pair span { color: var(--text-dim); font-size: 12px; }
+select, input {
+  width: 100%;
+  padding: 9px 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  appearance: none;
+}
+input { appearance: auto; }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2393a1bd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+select:focus, input:focus { border-color: var(--accent); }
+input::placeholder { color: var(--text-dim); }
+.section-title {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 6px;
+  letter-spacing: 1px;
+}
+#reset {
+  margin-top: 14px;
+  width: 100%;
+  padding: 11px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+#reset:active { filter: brightness(1.3); }
+
+main { padding: 0 12px 24px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.card .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.card .name { font-size: 17px; font-weight: 700; }
+.badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.badge.pos { color: var(--accent); border-color: var(--accent-dim); }
+.badge.hist { color: #f0b45a; border-color: #6b5424; }
+.card .meta {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 12px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.card .meta b { color: var(--text); font-weight: 500; }
+.empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 48px 0;
+  font-size: 14px;
+}
+@media (min-width: 640px) {
+  header { padding: 18px 24px; }
+  details#filters { margin: 0 24px 16px; }
+  main { padding: 0 24px 32px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>球员搜索</h1>
+  <span id="count"></span>
+</header>
+
+<details id="filters" open>
+  <summary>查询条件</summary>
+  <div class="filter-body">
+    <div class="grid">
+      <div class="section-title">位置</div>
+      <div class="field"><label>位置组别</label><select id="posGroup"></select></div>
+      <div class="field"><label>排除组别</label><select id="posGroupEx"></select></div>
+      <div class="field"><label>精确位置</label><input id="pos" list="dl-pos" placeholder="如：中锋"></div>
+      <div class="field"><label>类型</label>
+        <select id="type"><option>全部</option><option>现役</option><option>历史</option></select>
+      </div>
+      <div class="field"><label>背号范围</label>
+        <div class="pair"><input id="shirtMin" type="number" inputmode="numeric" placeholder="最小"><span>至</span><input id="shirtMax" type="number" inputmode="numeric" placeholder="最大"></div>
+      </div>
+
+      <div class="section-title">俱乐部 / 联赛</div>
+      <div class="field"><label>俱乐部分组</label><select id="leagueGroup"></select></div>
+      <div class="field"><label>排除分组</label><select id="leagueGroupEx"></select></div>
+      <div class="field"><label>精确俱乐部</label><input id="club" list="dl-club" placeholder="如：曼联"></div>
+
+      <div class="section-title">国籍</div>
+      <div class="field"><label>国籍大洲</label><select id="continent"></select></div>
+      <div class="field"><label>排除大洲</label><select id="continentEx"></select></div>
+      <div class="field"><label>精确国籍</label><input id="country" list="dl-country" placeholder="如：法国"></div>
+
+      <div class="section-title">身体</div>
+      <div class="field"><label>身高范围(cm)</label>
+        <div class="pair"><input id="heightMin" type="number" inputmode="numeric" placeholder="最小"><span>至</span><input id="heightMax" type="number" inputmode="numeric" placeholder="最大"></div>
+      </div>
+      <div class="field"><label>惯用脚</label><select id="foot"></select></div>
+    </div>
+    <button id="reset">重置全部条件</button>
+  </div>
+</details>
+
+<datalist id="dl-pos"></datalist>
+<datalist id="dl-club"></datalist>
+<datalist id="dl-country"></datalist>
+
+<main><div id="results" class="cards"></div></main>
+
+<script>
+const PLAYERS = __PLAYERS_JSON__;
+const CONFIG = __CONFIG_JSON__;
+
+const CONTINENTS = ["全部", "欧洲", "南美洲", "北美洲", "非洲", "亚洲", "大洋洲", "其他"];
+const $ = id => document.getElementById(id);
+
+function uniq(field) {
+  return [...new Set(PLAYERS.map(p => p[field]).filter(Boolean))].sort();
+}
+function fillSelect(el, values) {
+  el.innerHTML = values.map(v => `<option>${v}</option>`).join("");
+}
+function fillDatalist(id, values) {
+  $(id).innerHTML = values.map(v => `<option value="${v}">`).join("");
+}
+function parseIntOrNull(v) {
+  v = String(v).trim();
+  return v === "" || isNaN(v) ? null : parseInt(v, 10);
+}
+function getContinent(country) {
+  return country ? (CONFIG.country_continent[country] || "其他") : "其他";
+}
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function initFilters() {
+  fillSelect($("posGroup"), Object.keys(CONFIG.position_groups));
+  fillSelect($("posGroupEx"), Object.keys(CONFIG.position_groups));
+  fillSelect($("leagueGroup"), Object.keys(CONFIG.league_groups));
+  fillSelect($("leagueGroupEx"), Object.keys(CONFIG.league_groups));
+  fillSelect($("continent"), CONTINENTS);
+  fillSelect($("continentEx"), CONTINENTS);
+  fillSelect($("foot"), ["全部", ...uniq("惯用脚")]);
+  fillDatalist("dl-pos", uniq("位置"));
+  fillDatalist("dl-club", uniq("俱乐部"));
+  fillDatalist("dl-country", uniq("国籍"));
+
+  document.querySelectorAll("#filters select, #filters input").forEach(el =>
+    el.addEventListener("input", applyFilters));
+  $("reset").addEventListener("click", resetFilters);
+}
+
+function applyFilters() {
+  let rows = PLAYERS;
+
+  const pg = $("posGroup").value, pge = $("posGroupEx").value, pos = $("pos").value.trim();
+  if (pg !== "全部") rows = rows.filter(p => (CONFIG.position_groups[pg] || []).includes(p["位置"]));
+  if (pge !== "全部") {
+    const ex = CONFIG.position_groups[pge] || [];
+    if (ex.length) rows = rows.filter(p => !ex.includes(p["位置"]));
+  }
+  if (pos) rows = rows.filter(p => p["位置"] === pos);
+
+  const type = $("type").value;
+  if (type !== "全部") rows = rows.filter(p => p["类型"] === type);
+
+  const sMin = parseIntOrNull($("shirtMin").value), sMax = parseIntOrNull($("shirtMax").value);
+  if (sMin !== null || sMax !== null) {
+    rows = rows.filter(p => {
+      const n = parseIntOrNull(p["背号"]);
+      return n !== null && (sMin === null || n >= sMin) && (sMax === null || n <= sMax);
+    });
+  }
+
+  const lg = $("leagueGroup").value, lge = $("leagueGroupEx").value, club = $("club").value.trim();
+  if (lg !== "全部") rows = rows.filter(p => (CONFIG.league_groups[lg] || []).includes(p["俱乐部"]));
+  if (lge !== "全部") {
+    const ex = CONFIG.league_groups[lge] || [];
+    if (ex.length) rows = rows.filter(p => !ex.includes(p["俱乐部"]));
+  }
+  if (club) rows = rows.filter(p => p["俱乐部"] === club);
+
+  const ct = $("continent").value, cte = $("continentEx").value, country = $("country").value.trim();
+  if (ct !== "全部") rows = rows.filter(p => getContinent(p["国籍"]) === ct);
+  if (cte !== "全部") rows = rows.filter(p => getContinent(p["国籍"]) !== cte);
+  if (country) rows = rows.filter(p => p["国籍"] === country);
+
+  const hMin = parseIntOrNull($("heightMin").value), hMax = parseIntOrNull($("heightMax").value);
+  if (hMin !== null || hMax !== null) {
+    rows = rows.filter(p => {
+      const h = parseIntOrNull(p["身高"]);
+      return h !== null && (hMin === null || h >= hMin) && (hMax === null || h <= hMax);
+    });
+  }
+
+  const foot = $("foot").value;
+  if (foot !== "全部") rows = rows.filter(p => p["惯用脚"] === foot);
+
+  render(rows);
+}
+
+function render(rows) {
+  $("count").textContent = `共 ${rows.length} 名球员`;
+  if (!rows.length) {
+    $("results").innerHTML = `<div class="empty">没有符合条件的球员</div>`;
+    return;
+  }
+  $("results").innerHTML = rows.map(p => `
+    <div class="card">
+      <div class="top">
+        <span class="name">${esc(p["球员"])}</span>
+        <span class="badge pos">${esc(p["位置"]) || "—"}</span>
+        <span class="badge ${p["类型"] === "历史" ? "hist" : ""}">${esc(p["类型"])}</span>
+        ${p["背号"] ? `<span class="badge">#${esc(p["背号"])}</span>` : ""}
+      </div>
+      <div class="meta">
+        <span>俱乐部 <b>${esc(p["俱乐部"]) || "—"}</b></span>
+        <span>国籍 <b>${esc(p["国籍"]) || "—"}</b></span>
+        <span>身高 <b>${p["身高"] ? esc(p["身高"]) + "cm" : "—"}</b></span>
+        <span>惯用脚 <b>${esc(p["惯用脚"]) || "—"}</b></span>
+      </div>
+    </div>`).join("");
+}
+
+function resetFilters() {
+  document.querySelectorAll("#filters select").forEach(el => el.selectedIndex = 0);
+  document.querySelectorAll("#filters input").forEach(el => el.value = "");
+  applyFilters();
+}
+
+initFilters();
+applyFilters();
+</script>
+</body>
+</html>
