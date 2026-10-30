@@ -252,9 +252,91 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 }
 .ctrl > svg.chev-f { right: 14px; }
 .ctrl > svg.lead { left: 14px; }
-.ctrl:focus-within > svg.chev-f { transform: rotate(180deg); color: var(--primary); }
+.ctrl:focus-within > svg.chev-f { color: var(--primary); }
+.ctrl.open > svg.chev-f { transform: rotate(180deg); color: var(--primary); }
 .ctrl:focus-within > svg.lead { color: var(--primary); }
 .ctrl > input.lead-in { padding-left: 44px; padding-right: 44px; }
+
+/* 自绘 M3 下拉菜单（替代原生 select 弹层） */
+.native-select {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0; height: 0;
+}
+.dd-trigger {
+  width: 100%;
+  height: 48px;
+  padding: 0 44px 0 16px;
+  border: none;
+  border-radius: 24px;
+  background: var(--surface-container);
+  color: var(--on-surface);
+  font-size: 15px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: background-color .15s var(--ease-standard), box-shadow .2s var(--ease);
+}
+.dd-trigger:hover { background: var(--surface-high); }
+.ctrl.open .dd-trigger,
+.dd-trigger:focus-visible {
+  background: var(--surface-lowest);
+  box-shadow: 0 0 0 2px var(--primary), var(--shadow-1);
+  outline: none;
+}
+.dd-menu {
+  position: absolute;
+  left: 0; right: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  background: var(--surface-lowest);
+  border-radius: 12px;
+  box-shadow: var(--shadow-2);
+  padding: 6px 0;
+  max-height: 264px;
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(-6px) scale(.97);
+  transform-origin: top center;
+  pointer-events: none;
+  transition: opacity .15s var(--ease), transform .18s var(--ease);
+}
+.dd-menu.up {
+  top: auto;
+  bottom: calc(100% + 6px);
+  transform-origin: bottom center;
+  transform: translateY(6px) scale(.97);
+}
+.ctrl.open .dd-menu {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.dd-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: background-color .12s var(--ease-standard);
+}
+.dd-item:hover { background: color-mix(in srgb, var(--on-surface) 6%, transparent); }
+.dd-item.sel { color: var(--primary); font-weight: 500; }
+.dd-item .ck {
+  margin-left: auto;
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity .12s;
+}
+.dd-item.sel .ck { opacity: 1; }
 .clr {
   position: absolute;
   right: 10px;
@@ -644,6 +726,57 @@ const segReset = id => {
   btns[0].classList.add("active");
 };
 
+/* 自绘下拉：select 仅作数据层，UI 为 M3 菜单 */
+const CHECK_SVG = '<svg class="ck" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+function closeAllDropdowns() {
+  document.querySelectorAll(".ctrl.open").forEach(c => c.classList.remove("open"));
+}
+function buildDropdown(sel) {
+  const ctrl = sel.parentElement;
+  sel.classList.add("native-select");
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "dd-trigger";
+  const menu = document.createElement("div");
+  menu.className = "dd-menu";
+  const items = [...sel.options].map(o => {
+    const it = document.createElement("div");
+    it.className = "dd-item";
+    it.dataset.v = o.value;
+    it.innerHTML = `<span>${esc(o.text)}</span>${CHECK_SVG}`;
+    it.addEventListener("click", () => {
+      sel.value = o.value;
+      syncDD();
+      closeAllDropdowns();
+      sel.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    menu.appendChild(it);
+    return it;
+  });
+  const syncDD = () => {
+    trigger.textContent = sel.value;
+    items.forEach(it => it.classList.toggle("sel", it.dataset.v === sel.value));
+  };
+  trigger.addEventListener("click", e => {
+    e.stopPropagation();
+    const was = ctrl.classList.contains("open");
+    closeAllDropdowns();
+    if (!was) {
+      const r = ctrl.getBoundingClientRect();
+      const need = Math.min(menu.scrollHeight, 264) + 8;
+      menu.classList.toggle("up", r.bottom + need > innerHeight && r.top > need);
+      ctrl.classList.add("open");
+      syncDD();
+    }
+  });
+  ctrl.appendChild(trigger);
+  ctrl.appendChild(menu);
+  sel._syncDD = syncDD;
+  syncDD();
+}
+document.addEventListener("click", closeAllDropdowns);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeAllDropdowns(); });
+
 /* 涟漪 */
 function addRipple(e) {
   const el = e.currentTarget;
@@ -671,6 +804,7 @@ function initFilters() {
   fillDatalist("dl-club", uniq("俱乐部"));
   fillDatalist("dl-country", uniq("国籍"));
 
+  document.querySelectorAll("#filters select").forEach(buildDropdown);
   document.querySelectorAll("#filters select, #filters input").forEach(el =>
     el.addEventListener("input", applyFilters));
   document.querySelectorAll(".clr").forEach(btn => {
@@ -802,8 +936,15 @@ function render(rows) {
 }
 
 function resetFilters() {
-  document.querySelectorAll("#filters select").forEach(el => el.selectedIndex = 0);
-  document.querySelectorAll("#filters input").forEach(el => el.value = "");
+  document.querySelectorAll("#filters select").forEach(el => {
+    el.selectedIndex = 0;
+    if (el._syncDD) el._syncDD();
+  });
+  document.querySelectorAll("#filters input").forEach(el => {
+    el.value = "";
+    const c = el.closest(".ctrl");
+    if (c) c.classList.remove("has-value");
+  });
   segReset("type");
   segReset("foot");
   applyFilters();
