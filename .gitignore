@@ -1,3 +1,16 @@
 /build/*
 /dist/*
 *.spec
+
+# Node / Capacitor
+node_modules/
+/android/
+/web/index.html
+
+# 本地 Android SDK 与 Gradle 分发包（体积大，不入库）
+/.android-sdk/
+
+# Python
+__pycache__/
+.pytest_cache/
+.coverage

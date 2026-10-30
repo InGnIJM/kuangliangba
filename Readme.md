@@ -3,16 +3,54 @@
 
 这是一个球员搜索工具，可以根据球员的姓名、位置、联赛等条件进行搜索。开发于2026年春节，用于况两把活动中进行快速搜索。后续如果有类似活动仅需更新数据集即可继续使用。
 
+提供三种形态：
+
+| 形态 | 入口 | 说明 |
+| --- | --- | --- |
+| Windows 桌面版 | `player_search.py` / `dist/player_search.exe` | tkinter 原版 |
+| 网页版 | `web/index.html` | 单文件、移动端自适应、实时筛选，浏览器直接打开 |
+| 安卓 APP | `dist/player_search.apk` | Capacitor 打包网页版，纯离线 |
+
 ## 如何使用
 
-1、直接运行代码
+### 1、Windows 桌面版
 
-2、运行下方命令打包成exe可运行文件
+直接运行 `player_search.py`，或打包成 exe：
 
 ```
-pyinstaller -F -w player_search.py 
+pyinstaller -F -w player_search.py
 ```
 
-3、如果有更好的数据集可以替换players.csv文件
+### 2、网页版
 
-4、组别是根据数据集手敲的，如果更新数据集部分组别需要更新
+```
+python tools/build_web.py
+```
+
+生成 `web/index.html`（数据内嵌，单文件可双击打开，也可发到手机用浏览器打开）。
+
+### 3、安卓 APK
+
+```
+tools\build_apk.bat
+```
+
+产物为 `dist/player_search.apk`（debug 签名，可直接安装）。
+
+首次构建需准备环境（一次性）：
+
+1. JDK 21（脚本默认 `C:\Program Files\Java\jdk-21`，不符请改 `tools/build_apk.bat`）
+2. `npm install`（安装 Capacitor 依赖）
+3. 本目录下 `.android-sdk/`：放入 Android cmdline-tools 并安装 `platforms;android-36`、`build-tools`、`platform-tools`；`gradle-dist/` 放 Gradle 8.14.3 解压版（services.gradle.org 直连超时，可用腾讯镜像 `mirrors.cloud.tencent.com/gradle/`）
+
+## 数据集与分组更新
+
+- 球员数据：`players.csv`（8 列：球员/位置/类型/背号/俱乐部/国籍/身高/惯用脚），换数据后重新运行 `build_web.py`（网页/APP）或重启桌面版
+- 分组配置：`groups.json`，包含 `position_groups`（位置组别）、`league_groups`（联赛→俱乐部集合）、`country_continent`（国籍→大洲）三项，换数据集时按需修改，**不用改代码**
+- 注意：`player_search.py` 桌面版仍使用代码内置分组，网页版/APP 读取 `groups.json`
+
+## 测试
+
+```
+pytest test/ --cov=tools --cov-report=term-missing
+```
