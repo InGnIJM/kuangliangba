@@ -1,0 +1,8 @@
+{
+  "appId": "com.kuangliangba.playersearch",
+  "appName": "球员搜索",
+  "webDir": "web",
+  "android": {
+    "allowMixedContent": false
+  }
+}

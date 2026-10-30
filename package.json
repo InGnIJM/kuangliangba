@@ -1,0 +1,15 @@
+{
+  "name": "kuangliangba-player-search",
+  "version": "1.0.0",
+  "private": true,
+  "description": "球员条件筛选搜索工具",
+  "scripts": {
+    "build:web": "python tools/build_web.py",
+    "sync": "cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3"
+  }
+}
