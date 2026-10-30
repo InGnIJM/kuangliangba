@@ -332,8 +332,14 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
   cursor: pointer;
   transition: background-color .12s var(--ease-standard);
 }
-.dd-item:hover { background: color-mix(in srgb, var(--on-surface) 6%, transparent); }
+.dd-item:hover, .dd-item.act { background: color-mix(in srgb, var(--on-surface) 6%, transparent); }
 .dd-item.sel { color: var(--primary); font-weight: 500; }
+.dd-item b { color: var(--primary); font-weight: 600; }
+.dd-empty {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--on-surface-variant);
+}
 .dd-item .ck {
   margin-left: auto;
   width: 16px; height: 16px;
@@ -783,6 +789,75 @@ function buildDropdown(sel) {
 document.addEventListener("click", closeAllDropdowns);
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeAllDropdowns(); });
 
+/* 自绘自动补全：datalist 仅作数据源，UI 为 M3 菜单 */
+function buildAutocomplete(input) {
+  const ctrl = input.closest(".ctrl");
+  const dl = document.getElementById(input.getAttribute("list") || "");
+  if (!ctrl || !dl) return;
+  input.removeAttribute("list");
+  input.setAttribute("autocomplete", "off");
+  const opts = [...dl.options].map(o => o.value);
+  const menu = document.createElement("div");
+  menu.className = "dd-menu ac";
+  ctrl.appendChild(menu);
+  let active = -1, shown = [], justPicked = false;
+  const hl = t => {
+    const q = input.value.trim().toLowerCase();
+    const i = q ? t.toLowerCase().indexOf(q) : -1;
+    return i < 0 ? esc(t)
+      : esc(t.slice(0, i)) + "<b>" + esc(t.slice(i, i + q.length)) + "</b>" + esc(t.slice(i + q.length));
+  };
+  const render = () => {
+    const q = input.value.trim().toLowerCase();
+    shown = (q ? opts.filter(v => v.toLowerCase().includes(q)) : opts).slice(0, 60);
+    active = -1;
+    menu.innerHTML = shown.length
+      ? shown.map(v => `<div class="dd-item" data-v="${esc(v)}"><span>${hl(v)}</span></div>`).join("")
+      : '<div class="dd-empty">无匹配项</div>';
+  };
+  const open = () => {
+    const r = ctrl.getBoundingClientRect();
+    const need = Math.min(menu.scrollHeight, 264) + 8;
+    menu.classList.toggle("up", r.bottom + need > innerHeight && r.top > need);
+    closeAllDropdowns();
+    ctrl.classList.add("open");
+  };
+  const close = () => ctrl.classList.remove("open");
+  const pick = v => {
+    justPicked = true;
+    input.value = v;
+    close();
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  input.addEventListener("focus", () => { render(); open(); });
+  input.addEventListener("input", () => {
+    if (justPicked) { justPicked = false; return; }
+    render();
+    open();
+  });
+  input.addEventListener("blur", () => setTimeout(close, 120));
+  input.addEventListener("keydown", e => {
+    const items = [...menu.querySelectorAll(".dd-item")];
+    if (e.key === "Escape") { close(); return; }
+    if (!ctrl.classList.contains("open")) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      active = e.key === "ArrowDown" ? Math.min(active + 1, items.length - 1) : Math.max(active - 1, 0);
+      items.forEach((it, i) => it.classList.toggle("act", i === active));
+      if (items[active]) items[active].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter" && active >= 0 && items[active] && items[active].dataset.v) {
+      e.preventDefault();
+      pick(items[active].dataset.v);
+    }
+  });
+  menu.addEventListener("mousedown", e => {
+    const it = e.target.closest(".dd-item");
+    if (!it || !it.dataset.v) return;
+    e.preventDefault();
+    pick(it.dataset.v);
+  });
+}
+
 /* 涟漪 */
 function addRipple(e) {
   const el = e.currentTarget;
@@ -811,6 +886,7 @@ function initFilters() {
   fillDatalist("dl-country", uniq("国籍"));
 
   document.querySelectorAll("#filters select").forEach(buildDropdown);
+  ["pos", "club", "country"].forEach(id => buildAutocomplete($(id)));
   document.querySelectorAll("#filters select, #filters input").forEach(el =>
     el.addEventListener("input", applyFilters));
   document.querySelectorAll(".clr").forEach(btn => {
