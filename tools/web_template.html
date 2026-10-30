@@ -175,14 +175,26 @@ details#filters[open] summary .chev { transform: rotate(180deg); }
   gap: 18px 12px;
 }
 .field { position: relative; min-width: 0; }
-.field .pair { display: flex; align-items: flex-start; gap: 8px; }
-.field .pair > .field { flex: 1; }
-.field .pair .sep {
+.field .pair { display: flex; align-items: center; gap: 8px; }
+.field .sub { position: relative; flex: 1; min-width: 0; }
+.field .sep {
   color: var(--on-surface-variant);
-  font-size: 14px;
-  line-height: 48px;
+  font-size: 13px;
   flex-shrink: 0;
 }
+
+/* 聚焦指示条：底部蓝条从中心展开 */
+.ul {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--primary);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform .18s var(--ease);
+  pointer-events: none;
+}
+:focus-within > .ul { transform: scaleX(1); }
 
 /* M3 浮动标签文本框 */
 select, input {
@@ -207,12 +219,16 @@ select {
   padding-right: 40px;
   cursor: pointer;
 }
+select:hover, input:hover {
+  background: var(--surface-high);
+  border-bottom-color: var(--on-surface);
+}
 select:focus, input:focus {
-  border-bottom: 2px solid var(--primary);
   background: var(--surface-high);
 }
 input::placeholder { color: transparent; }
 input:focus::placeholder { color: var(--on-surface-variant); }
+.field .sub input::placeholder { color: var(--on-surface-variant); }
 input[type=number] { appearance: textfield; -moz-appearance: textfield; }
 input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
@@ -232,30 +248,24 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 }
 .field > input:focus ~ label,
 .field > input:not(:placeholder-shown) ~ label,
-.field > select ~ label {
+.field > select ~ label,
+.field.seg > label,
+.field.range > label {
   top: -9px;
   font-size: 12px;
   background: var(--surface-lowest);
 }
 .field > input:focus ~ label,
-.field > select:focus ~ label { color: var(--primary); }
-
-/* 分段按钮的静态标签 */
-.field > .seg-label {
-  position: static;
-  display: block;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--on-surface-variant);
-  padding: 0 4px 4px;
-}
+.field > select:focus ~ label,
+.field.seg:focus-within > label,
+.field.range:focus-within > label { color: var(--primary); }
 
 /* ===== M3 分段按钮 ===== */
 .segmented {
   display: flex;
-  height: 40px;
+  height: 48px;
   border: 1px solid var(--outline);
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
 }
 .segmented button {
@@ -429,6 +439,11 @@ main { padding: 0 16px 32px; }
   }
 }
 
+/* 空间足够时分段按钮与范围字段占两格 */
+@media (min-width: 480px) {
+  .field.seg, .field.range { grid-column: span 2; }
+}
+
 @media (min-width: 640px) {
   header { padding: 20px 24px; }
   details#filters { margin: 0 24px 20px; }
@@ -457,32 +472,44 @@ main { padding: 0 16px 32px; }
   <div class="filter-body">
     <div class="grid">
       <div class="section-title">位置</div>
-      <div class="field"><select id="posGroup"></select><label>位置组别</label></div>
-      <div class="field"><select id="posGroupEx"></select><label>排除组别</label></div>
-      <div class="field"><input id="pos" list="dl-pos" placeholder=" "><label>精确位置</label></div>
-      <div class="field">
-        <label class="seg-label">类型</label>
+      <div class="field"><select id="posGroup"></select><i class="ul"></i><label>位置组别</label></div>
+      <div class="field"><select id="posGroupEx"></select><i class="ul"></i><label>排除组别</label></div>
+      <div class="field"><input id="pos" list="dl-pos" placeholder=" "><i class="ul"></i><label>精确位置</label></div>
+      <div class="field seg">
         <div class="segmented" id="type" data-values="全部,现役,历史"></div>
+        <label>类型</label>
       </div>
-      <div class="field"><input id="shirtMin" type="number" inputmode="numeric" placeholder=" "><label>最小背号</label></div>
-      <div class="field"><input id="shirtMax" type="number" inputmode="numeric" placeholder=" "><label>最大背号</label></div>
+      <div class="field range">
+        <div class="pair">
+          <div class="sub"><input id="shirtMin" type="number" inputmode="numeric" placeholder="最小"><i class="ul"></i></div>
+          <span class="sep">至</span>
+          <div class="sub"><input id="shirtMax" type="number" inputmode="numeric" placeholder="最大"><i class="ul"></i></div>
+        </div>
+        <label>背号范围</label>
+      </div>
 
       <div class="section-title">俱乐部 / 联赛</div>
-      <div class="field"><select id="leagueGroup"></select><label>俱乐部分组</label></div>
-      <div class="field"><select id="leagueGroupEx"></select><label>排除分组</label></div>
-      <div class="field"><input id="club" list="dl-club" placeholder=" "><label>精确俱乐部</label></div>
+      <div class="field"><select id="leagueGroup"></select><i class="ul"></i><label>俱乐部分组</label></div>
+      <div class="field"><select id="leagueGroupEx"></select><i class="ul"></i><label>排除分组</label></div>
+      <div class="field"><input id="club" list="dl-club" placeholder=" "><i class="ul"></i><label>精确俱乐部</label></div>
 
       <div class="section-title">国籍</div>
-      <div class="field"><select id="continent"></select><label>国籍大洲</label></div>
-      <div class="field"><select id="continentEx"></select><label>排除大洲</label></div>
-      <div class="field"><input id="country" list="dl-country" placeholder=" "><label>精确国籍</label></div>
+      <div class="field"><select id="continent"></select><i class="ul"></i><label>国籍大洲</label></div>
+      <div class="field"><select id="continentEx"></select><i class="ul"></i><label>排除大洲</label></div>
+      <div class="field"><input id="country" list="dl-country" placeholder=" "><i class="ul"></i><label>精确国籍</label></div>
 
       <div class="section-title">身体</div>
-      <div class="field"><input id="heightMin" type="number" inputmode="numeric" placeholder=" "><label>最小身高</label></div>
-      <div class="field"><input id="heightMax" type="number" inputmode="numeric" placeholder=" "><label>最大身高</label></div>
-      <div class="field">
-        <label class="seg-label">惯用脚</label>
+      <div class="field range">
+        <div class="pair">
+          <div class="sub"><input id="heightMin" type="number" inputmode="numeric" placeholder="最小"><i class="ul"></i></div>
+          <span class="sep">至</span>
+          <div class="sub"><input id="heightMax" type="number" inputmode="numeric" placeholder="最大"><i class="ul"></i></div>
+        </div>
+        <label>身高范围(cm)</label>
+      </div>
+      <div class="field seg">
         <div class="segmented" id="foot"></div>
+        <label>惯用脚</label>
       </div>
     </div>
     <button id="reset">重置全部条件</button>
