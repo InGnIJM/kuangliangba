@@ -85,9 +85,14 @@ header {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 22px 20px 44px;
-  background: linear-gradient(135deg, var(--primary-container) 0%, var(--secondary-container) 55%, var(--tertiary-container) 130%);
+  padding: 22px 20px 20px;
+  background: linear-gradient(135deg, var(--primary-container) 0%, var(--secondary-container) 100%);
   border-radius: 0 0 28px 28px;
+}
+/* hero 渐变延伸带：非粘性，仅作筛选卡的重叠背景 */
+.hero-ext {
+  height: 26px;
+  background: linear-gradient(180deg, var(--secondary-container), var(--tertiary-container));
 }
 header .icon-badge {
   width: 46px; height: 46px;
@@ -589,7 +594,7 @@ main { padding: 0 16px 32px; }
 }
 
 @media (min-width: 640px) {
-  header { padding: 24px 32px 48px; }
+  header { padding: 24px 32px 24px; }
   details#filters { margin: -28px 24px 20px; }
   main { padding: 0 24px 40px; }
 }
@@ -605,6 +610,7 @@ main { padding: 0 16px 32px; }
     <span id="count"></span>
   </div>
 </header>
+<div class="hero-ext"></div>
 
 <details id="filters" open>
   <summary>
