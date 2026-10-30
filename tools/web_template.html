@@ -830,6 +830,11 @@ function buildAutocomplete(input) {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   };
   input.addEventListener("focus", () => { render(); open(); });
+  input.addEventListener("click", e => {
+    e.stopPropagation();
+    render();
+    open();
+  });
   input.addEventListener("input", () => {
     if (justPicked) { justPicked = false; return; }
     render();
