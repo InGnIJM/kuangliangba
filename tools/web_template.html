@@ -5,169 +5,272 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>球员搜索</title>
 <style>
+/* ===== Material Design 3 tokens ===== */
 :root {
-  --bg: #0b1220;
-  --surface: #131c2e;
-  --surface-2: #1a2540;
-  --border: #2a3a5c;
-  --text: #e8edf7;
-  --text-dim: #93a1bd;
-  --accent: #34d17b;
-  --accent-dim: #1d5c3a;
-  --danger: #f0645a;
-  --radius: 12px;
+  --primary: #0b57d0;
+  --on-primary: #ffffff;
+  --primary-container: #d3e3fd;
+  --on-primary-container: #041e49;
+  --secondary-container: #c2e7ff;
+  --on-secondary-container: #001d35;
+  --tertiary-container: #ffd8e4;
+  --on-tertiary-container: #31111d;
+  --surface: #f8fafd;
+  --surface-lowest: #ffffff;
+  --surface-low: #f0f4f9;
+  --surface-container: #e9eef6;
+  --surface-high: #dee3eb;
+  --on-surface: #1f1f1f;
+  --on-surface-variant: #444746;
+  --outline: #747775;
+  --outline-variant: #c4c7c5;
+  --error-container: #f9dedc;
+  --on-error-container: #410e0b;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #a8c7fa;
+    --on-primary: #062e6f;
+    --primary-container: #0842a0;
+    --on-primary-container: #d3e3fd;
+    --secondary-container: #004a77;
+    --on-secondary-container: #c2e7ff;
+    --tertiary-container: #633b48;
+    --on-tertiary-container: #ffd8e4;
+    --surface: #131314;
+    --surface-lowest: #0e0e11;
+    --surface-low: #1b1b1e;
+    --surface-container: #1f1f22;
+    --surface-high: #2a2a2d;
+    --on-surface: #e3e3e3;
+    --on-surface-variant: #c4c7c5;
+    --outline: #8e918f;
+    --outline-variant: #444746;
+    --error-container: #8c1d18;
+    --on-error-container: #f9dedc;
+    --shadow-1: 0 1px 2px rgba(0,0,0,.5), 0 1px 3px 1px rgba(0,0,0,.3);
+  }
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 15px;
+  background: var(--surface-low);
+  color: var(--on-surface);
+  font-family: Roboto, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px;
   line-height: 1.5;
   min-height: 100vh;
 }
+
+/* ===== Top app bar ===== */
 header {
   position: sticky;
   top: 0;
   z-index: 10;
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 14px 16px;
-  background: linear-gradient(180deg, var(--bg) 85%, transparent);
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-low);
 }
-header h1 { font-size: 20px; font-weight: 700; }
-header h1::before { content: "⚽ "; }
-#count { color: var(--accent); font-size: 13px; }
+header .icon-badge {
+  width: 40px; height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  flex-shrink: 0;
+}
+header h1 { font-size: 22px; font-weight: 500; letter-spacing: 0; }
+#count { font-size: 12px; font-weight: 500; color: var(--primary); }
 
+/* ===== Filter card ===== */
 details#filters {
-  margin: 0 12px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  margin: 0 16px 16px;
+  background: var(--surface-lowest);
+  border-radius: 12px;
+  box-shadow: var(--shadow-1);
   overflow: hidden;
 }
 details#filters summary {
-  padding: 12px 16px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  min-height: 48px;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
   list-style: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   user-select: none;
 }
-details#filters summary::after {
-  content: "▾";
-  color: var(--text-dim);
+details#filters summary::-webkit-details-marker { display: none; }
+details#filters summary .chev {
+  width: 24px; height: 24px;
+  color: var(--on-surface-variant);
   transition: transform .2s;
 }
-details#filters:not([open]) summary::after { transform: rotate(-90deg); }
-.filter-body { padding: 0 16px 16px; }
+details#filters[open] summary .chev { transform: rotate(180deg); }
+.filter-body { padding: 4px 16px 20px; }
+
+/* ===== Field grid ===== */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px 12px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px 12px;
 }
-.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.field label { font-size: 12px; color: var(--text-dim); }
-.field .pair { display: flex; align-items: center; gap: 6px; }
-.field .pair span { color: var(--text-dim); font-size: 12px; }
+.field { display: flex; flex-direction: column; min-width: 0; }
+.field > label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  padding: 0 4px 2px;
+}
+.field .pair { display: flex; align-items: center; gap: 8px; }
+.field .pair span { color: var(--on-surface-variant); font-size: 12px; flex-shrink: 0; }
+
+/* M3 filled text field / dropdown */
 select, input {
   width: 100%;
-  padding: 9px 10px;
-  background: var(--surface-2);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 14px;
+  height: 48px;
+  padding: 0 12px;
+  background: var(--surface-container);
+  color: var(--on-surface);
+  border: none;
+  border-bottom: 1px solid var(--on-surface-variant);
+  border-radius: 4px 4px 0 0;
+  font-size: 16px;
   font-family: inherit;
   outline: none;
-  appearance: none;
 }
-input { appearance: auto; }
 select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2393a1bd'/%3E%3C/svg%3E");
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z' fill='%238e918f'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 28px;
+  background-position: right 8px center;
+  padding-right: 40px;
 }
-select:focus, input:focus { border-color: var(--accent); }
-input::placeholder { color: var(--text-dim); }
+select:focus, input:focus {
+  border-bottom: 2px solid var(--primary);
+  background: var(--surface-high);
+}
+input::placeholder { color: var(--on-surface-variant); }
+input[type=number] { appearance: textfield; -moz-appearance: textfield; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* Section titles — M3 label + divider */
 .section-title {
   grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-size: 12px;
-  color: var(--accent);
-  font-weight: 600;
-  margin-top: 6px;
-  letter-spacing: 1px;
+  font-weight: 500;
+  letter-spacing: .5px;
+  color: var(--primary);
+  margin-top: 8px;
 }
+.section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--outline-variant);
+}
+
+/* M3 tonal button */
 #reset {
-  margin-top: 14px;
+  margin-top: 20px;
   width: 100%;
-  padding: 11px;
-  background: var(--accent-dim);
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
+  height: 40px;
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  border: none;
+  border-radius: 20px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   font-family: inherit;
+  transition: box-shadow .15s, filter .15s;
 }
-#reset:active { filter: brightness(1.3); }
+#reset:hover { box-shadow: var(--shadow-1); }
+#reset:active { filter: brightness(.94); }
 
-main { padding: 0 12px 24px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+/* ===== Result cards ===== */
+main { padding: 0 16px 32px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
+  background: var(--surface-lowest);
+  border-radius: 12px;
+  box-shadow: var(--shadow-1);
+  padding: 16px;
 }
 .card .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.card .name { font-size: 17px; font-weight: 700; }
-.badge {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 20px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
+.card .name { font-size: 16px; font-weight: 500; margin-right: 2px; }
+
+/* M3 chips (8px radius) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
 }
-.badge.pos { color: var(--accent); border-color: var(--accent-dim); }
-.badge.hist { color: #f0b45a; border-color: #6b5424; }
+.chip.pos { background: var(--primary-container); color: var(--on-primary-container); }
+.chip.hist { background: var(--tertiary-container); color: var(--on-tertiary-container); }
+.chip.num { background: transparent; border: 1px solid var(--outline); color: var(--on-surface-variant); }
+
 .card .meta {
-  margin-top: 8px;
+  margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 4px 12px;
-  font-size: 13px;
-  color: var(--text-dim);
+  gap: 6px 16px;
 }
-.card .meta b { color: var(--text); font-weight: 500; }
+.card .meta span {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card .meta b { font-size: 14px; font-weight: 500; color: var(--on-surface); text-align: right; }
+
 .empty {
   text-align: center;
-  color: var(--text-dim);
-  padding: 48px 0;
+  color: var(--on-surface-variant);
+  padding: 56px 0;
   font-size: 14px;
 }
+.empty svg { display: block; margin: 0 auto 12px; color: var(--outline-variant); }
+
 @media (min-width: 640px) {
-  header { padding: 18px 24px; }
-  details#filters { margin: 0 24px 16px; }
-  main { padding: 0 24px 32px; }
+  header { padding: 20px 24px; }
+  details#filters { margin: 0 24px 20px; }
+  main { padding: 0 24px 40px; }
 }
 </style>
 </head>
 <body>
 <header>
-  <h1>球员搜索</h1>
-  <span id="count"></span>
+  <span class="icon-badge">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+  </span>
+  <div>
+    <h1>球员搜索</h1>
+    <span id="count"></span>
+  </div>
 </header>
 
 <details id="filters" open>
-  <summary>查询条件</summary>
+  <summary>
+    查询条件
+    <svg class="chev" viewBox="0 0 24 24" fill="currentColor"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+  </summary>
   <div class="filter-body">
     <div class="grid">
       <div class="section-title">位置</div>
@@ -302,16 +405,18 @@ function applyFilters() {
 function render(rows) {
   $("count").textContent = `共 ${rows.length} 名球员`;
   if (!rows.length) {
-    $("results").innerHTML = `<div class="empty">没有符合条件的球员</div>`;
+    $("results").innerHTML = `<div class="empty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      没有符合条件的球员</div>`;
     return;
   }
   $("results").innerHTML = rows.map(p => `
     <div class="card">
       <div class="top">
         <span class="name">${esc(p["球员"])}</span>
-        <span class="badge pos">${esc(p["位置"]) || "—"}</span>
-        <span class="badge ${p["类型"] === "历史" ? "hist" : ""}">${esc(p["类型"])}</span>
-        ${p["背号"] ? `<span class="badge">#${esc(p["背号"])}</span>` : ""}
+        <span class="chip pos">${esc(p["位置"]) || "—"}</span>
+        <span class="chip ${p["类型"] === "历史" ? "hist" : ""}">${esc(p["类型"])}</span>
+        ${p["背号"] ? `<span class="chip num">#${esc(p["背号"])}</span>` : ""}
       </div>
       <div class="meta">
         <span>俱乐部 <b>${esc(p["俱乐部"]) || "—"}</b></span>
